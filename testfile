@@ -1,0 +1,23 @@
+import Jimp from 'jimp';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  try {
+    const { imageUrl, number } = req.body;
+    if (!imageUrl || number === undefined) return res.status(400).json({ error: 'imageUrl and number required' });
+
+    const image = await Jimp.read(imageUrl);
+    const font = await Jimp.loadFont(Jimp.FONT_SANS_32_RED);
+
+    image.print(font, 10, 10, number.toString());
+
+    const buffer = await image.getBufferAsync(Jimp.MIME_PNG);
+    const base64 = buffer.toString('base64');
+
+    res.status(200).json({ base64: `data:image/png;base64,${base64}` });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to process image' });
+  }
+}
